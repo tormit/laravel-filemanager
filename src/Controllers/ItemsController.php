@@ -24,7 +24,12 @@ class ItemsController extends LfmController
 
         return [
             'items' => array_map(function ($item) {
-                return $item->fill()->attributes;
+                try {
+                    return $item->fill()->attributes;
+                } catch (\Exception $e) {
+                    sleep(1);
+                    return $item->fill()->attributes;
+                }
             }, array_slice($items, ($currentPage - 1) * $perPage, $perPage)),
             'paginator' => [
                 'current_page' => $currentPage,
@@ -44,17 +49,17 @@ class ItemsController extends LfmController
         });
         return view('laravel-filemanager::move')
             ->with([
-                'root_folders' => array_map(function ($type) use ($folder_types) {
-                    $path = $this->lfm->dir($this->helper->getRootFolder($type));
+                       'root_folders' => array_map(function ($type) use ($folder_types) {
+                           $path = $this->lfm->dir($this->helper->getRootFolder($type));
 
-                    return (object) [
-                        'name' => trans('laravel-filemanager::lfm.title-' . $type),
-                        'url' => $path->path('working_dir'),
-                        'children' => $path->folders(),
-                        'has_next' => ! ($type == end($folder_types)),
-                    ];
-                }, $folder_types),
-            ])
+                           return (object)[
+                               'name' => trans('laravel-filemanager::lfm.title-' . $type),
+                               'url' => $path->path('working_dir'),
+                               'children' => $path->folders(),
+                               'has_next' => !($type == end($folder_types)),
+                           ];
+                       }, $folder_types),
+                   ])
             ->with('items', $items);
     }
 
@@ -98,7 +103,7 @@ class ItemsController extends LfmController
 
     private static function getCurrentPageFromRequest()
     {
-        $currentPage = (int) request()->get('page', 1);
+        $currentPage = (int)request()->get('page', 1);
         $currentPage = $currentPage < 1 ? 1 : $currentPage;
 
         return $currentPage;
